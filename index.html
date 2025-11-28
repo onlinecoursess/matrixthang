@@ -1,0 +1,393 @@
+
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Wisdom - Minh Triết Năng Lượng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --card-bg: #1e1e24;
+            --gold: #d4af37;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --text-main: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(to bottom, rgba(18, 18, 18, 0.9), rgba(18, 18, 18, 0.95)),
+                url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .serif-font { font-family: 'Playfair Display', serif; }
+
+        /* Glass Panel */
+        .glass {
+            background: rgba(30, 30, 36, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .input-custom {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: 0.3s;
+        }
+        .input-custom:focus {
+            border-color: var(--gold);
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+
+        /* Buttons */
+        .btn-gold {
+            background: linear-gradient(135deg, #d4af37, #f3e5ab, #d4af37);
+            background-size: 200% auto;
+            color: #1a1a1a;
+            transition: 0.5s;
+        }
+        .btn-gold:hover { background-position: right center; transform: translateY(-2px); }
+
+        .btn-outline {
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            transition: 0.3s;
+        }
+        .btn-outline:hover { background: var(--gold); color: #000; }
+
+        /* PDF Print Area Styling */
+        #printArea {
+            background: #121212 !important;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Decorative Elements */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <!-- LOGIN -->
+    <div id="loginScreen" class="w-full max-w-md glass rounded-2xl p-10 relative hidden animate-fade-in-up">
+        <div class="text-center mb-10">
+            <i class="fas fa-galaxy text-5xl text-[#d4af37] mb-4 animate-spin-slow"></i>
+            <h1 class="text-3xl font-bold text-[#d4af37] serif-font">Matrix Wisdom</h1>
+            <p class="text-gray-400 text-sm mt-3 tracking-widest uppercase">Cổng Tri Thức Nội Tại</p>
+        </div>
+        
+        <form onsubmit="handleLogin(event)" class="space-y-6">
+            <input type="text" id="username" class="input-custom w-full rounded-lg py-3 px-4 text-white" placeholder="Tên truy cập">
+            <input type="password" id="password" class="input-custom w-full rounded-lg py-3 px-4 text-white" placeholder="Mật mã">
+            <p id="loginError" class="text-red-400 text-sm hidden text-center">Thông tin không chính xác</p>
+            <button type="submit" class="btn-gold w-full py-3 rounded-lg font-bold tracking-wider uppercase">Mở Cổng</button>
+        </form>
+    </div>
+
+    <!-- APP INTERFACE -->
+    <div id="appScreen" class="w-full max-w-5xl hidden pb-10">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass p-6 rounded-2xl">
+            <div class="flex items-center gap-4 mb-4 md:mb-0">
+                <div class="h-12 w-12 rounded-full bg-gradient-to-br from-[#d4af37] to-[#8b5cf6] flex items-center justify-center text-black font-bold text-xl">
+                    M
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white serif-font">Bản Tin Năng Lượng</h2>
+                    <p class="text-xs text-gray-400 uppercase tracking-widest">Daily Energy Forecast</p>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="downloadPDF()" class="btn-outline px-6 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
+                    <i class="fas fa-file-export"></i> Xuất Bản (PDF)
+                </button>
+                <button onclick="handleLogout()" class="text-gray-400 hover:text-white px-4">
+                    <i class="fas fa-power-off"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Input Section -->
+        <div class="glass p-8 rounded-2xl mb-8 flex flex-col items-center justify-center text-center">
+            <label class="text-[#d4af37] text-sm uppercase tracking-[0.2em] mb-4">Nhập Ngày Sinh Của Bạn</label>
+            <div class="flex items-center justify-center gap-4 w-full max-w-sm">
+                <button onclick="adjustDay(-1)" class="text-gray-500 hover:text-white transition text-2xl"><i class="fas fa-chevron-left"></i></button>
+                <input type="number" id="inputDay" min="1" max="31" 
+                    class="bg-transparent text-5xl font-bold text-white text-center w-32 border-b-2 border-gray-700 focus:border-[#d4af37] outline-none serif-font" 
+                    placeholder="01" onchange="calculateMatrix()">
+                <button onclick="adjustDay(1)" class="text-gray-500 hover:text-white transition text-2xl"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <p class="text-gray-500 text-sm mt-4 italic">Hệ thống tự động đồng bộ với năng lượng Tháng & Năm hiện tại</p>
+        </div>
+
+        <!-- REPORT AREA (PRINTABLE) -->
+        <div id="printArea" class="glass p-10 rounded-2xl min-h-[800px]">
+            <!-- Decorative Orbs -->
+            <div class="orb bg-blue-500 top-[-100px] left-[-100px] w-[300px] h-[300px]"></div>
+            <div class="orb bg-purple-500 bottom-[-100px] right-[-100px] w-[300px] h-[300px]"></div>
+
+            <div class="relative z-10">
+                <!-- Report Header -->
+                <div class="text-center mb-12 border-b border-gray-700/50 pb-8">
+                    <div class="inline-block px-4 py-1 rounded-full border border-[#d4af37]/30 text-[#d4af37] text-xs uppercase tracking-widest mb-4">
+                        Secure Report • Authorized Access
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-white serif-font mb-2">Thông Điệp Định Mệnh</h1>
+                    <p id="reportDate" class="text-gray-400 font-light text-lg">...</p>
+                    
+                    <!-- Tổng quan năng lượng -->
+                    <div id="dailyVibe" class="mt-6 hidden">
+                        <p class="text-xl text-[#d4af37] italic serif-font">" <span id="vibeText"></span> "</p>
+                    </div>
+                </div>
+
+                <!-- Welcome State -->
+                <div id="welcomeMessage" class="text-center py-20 opacity-50">
+                    <i class="fas fa-fingerprint text-6xl mb-4"></i>
+                    <p class="text-xl font-light">Vui lòng nhập Ngày Sinh để khởi chạy phân tích.</p>
+                </div>
+
+                <!-- Results Grid -->
+                <div id="resultContainer" class="hidden grid grid-cols-1 gap-8">
+                    <!-- Cards will be injected here -->
+                </div>
+
+                <!-- Footer -->
+                <div id="footerSignature" class="hidden mt-16 pt-8 border-t border-gray-700/50 flex justify-between items-end">
+                    <div>
+                        <p class="text-[#d4af37] font-bold text-lg serif-font">Matrix Wisdom</p>
+                        <p class="text-gray-500 text-xs">Phân tích dựa trên thuật toán năng lượng số học cổ đại.</p>
+                    </div>
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const USERS = { 'user': '123456', 'admin': '123456' };
+        const STORAGE_KEY = 'matrix_wisdom_pro';
+        const currentDate = new Date();
+
+        // --- AUTH SYSTEM ---
+        function init() {
+            if(localStorage.getItem(STORAGE_KEY)) showApp();
+            else document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim().toLowerCase();
+            const p = document.getElementById('password').value.trim();
+            if(USERS[u] === p) {
+                localStorage.setItem(STORAGE_KEY, 'true');
+                document.getElementById('loginScreen').classList.add('hidden');
+                showApp();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() { localStorage.removeItem(STORAGE_KEY); location.reload(); }
+        function showApp() { document.getElementById('appScreen').classList.remove('hidden'); }
+        
+        function adjustDay(delta) {
+            const input = document.getElementById('inputDay');
+            let val = parseInt(input.value) || 0;
+            val += delta;
+            if(val < 1) val = 31;
+            if(val > 31) val = 1;
+            input.value = val;
+            calculateMatrix();
+        }
+
+        // --- MATRIX LOGIC & CONTENT ---
+        function calculateMatrix() {
+            const day = parseInt(document.getElementById('inputDay').value);
+            if(!day || day < 1 || day > 31) return;
+
+            const m = currentDate.getMonth() + 1;
+            const y = currentDate.getFullYear();
+            
+            // Render Header Data
+            document.getElementById('reportDate').innerText = `Ngày sinh: ${day} • Thời điểm phân tích: Tháng ${m}/${y}`;
+            document.getElementById('welcomeMessage').classList.add('hidden');
+            document.getElementById('resultContainer').classList.remove('hidden');
+            document.getElementById('footerSignature').classList.remove('hidden');
+            document.getElementById('dailyVibe').classList.remove('hidden');
+
+            // Calculation Logic
+            let raw = `${day}${m}${y}`;
+            let digits = raw.split('').map(Number);
+            let n1 = digits.reduce((a,b)=>a+b,0);
+            let n2 = n1.toString().split('').reduce((a,b)=>a+Number(b),0);
+            let firstDigit = day < 10 ? day : Math.floor(day/10);
+            let n3 = n1 - (2 * firstDigit);
+            let n4 = Math.abs(n3).toString().split('').reduce((a,b)=>a+Number(b),0);
+
+            let all = raw + n1 + n2 + n3 + n4;
+            let counts = {};
+            for(let c of all) counts[c] = (counts[c]||0)+1;
+
+            // Generate Daily Vibe Quote (Randomized based on num1)
+            const vibes = [
+                "Hôm nay là ngày để gieo hạt giống của sự thịnh vượng.",
+                "Sự tĩnh lặng mang lại câu trả lời rõ ràng nhất.",
+                "Hãy can đảm bước ra khỏi vùng an toàn, phép màu đang chờ.",
+                "Kết nối chân thành tạo nên sức mạnh vô biên.",
+                "Kỷ luật là cầu nối giữa mục tiêu và thành tựu."
+            ];
+            document.getElementById('vibeText').innerText = vibes[n1 % vibes.length];
+
+            renderCards(counts, day);
+        }
+
+        function renderCards(counts, day) {
+            const container = document.getElementById('resultContainer');
+            container.innerHTML = '';
+
+            // Card Builder Function (Trung đạo & Đa dạng)
+            const addCard = (theme, title, content, type) => {
+                let gradient = '';
+                let icon = '';
+                
+                // Color Themes
+                if(type === 'mystic') { // Số 7, 4 (Tâm linh/Chữa lành)
+                    gradient = 'from-purple-900/40 to-blue-900/40 border-purple-500/30';
+                    icon = 'fa-moon';
+                } else if(type === 'growth') { // Số 1, 6 (Thử thách)
+                    gradient = 'from-red-900/30 to-orange-900/30 border-orange-500/30';
+                    icon = 'fa-fire';
+                } else if(type === 'prosperity') { // Số 8, 9, 3 (Tài lộc)
+                    gradient = 'from-yellow-900/30 to-amber-900/30 border-[#d4af37]/40';
+                    icon = 'fa-gem';
+                } else { // Balance
+                    gradient = 'from-emerald-900/30 to-teal-900/30 border-emerald-500/30';
+                    icon = 'fa-leaf';
+                }
+
+                container.innerHTML += `
+                <div class="bg-gradient-to-r ${gradient} border-l-4 p-8 rounded-r-xl shadow-lg relative overflow-hidden break-inside-avoid">
+                    <div class="absolute right-4 top-4 opacity-10 text-6xl"><i class="fas ${icon}"></i></div>
+                    
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-xs font-bold px-3 py-1 rounded bg-white/10 uppercase tracking-widest text-white/80">${theme}</span>
+                    </div>
+                    
+                    <h3 class="text-2xl font-bold text-white mb-3 serif-font">${title}</h3>
+                    <div class="text-gray-300 leading-relaxed text-justify font-light text-sm md:text-base space-y-2">
+                        ${content}
+                    </div>
+                </div>`;
+            };
+
+            /* === CONTENT LOGIC (Nội dung Đa dạng & Tích cực) === */
+
+            // 1. PHÂN TÍCH TÂM THỨC (Số 1)
+            if((counts[1] || 0) >= 3) {
+                addCard("Tâm Thức", "Chuyển Hóa Nỗi Cô Đơn Thành Sức Mạnh", 
+                `<p><strong>Hiện trạng:</strong> Bạn có thể cảm thấy lạc lõng hoặc suy nghĩ quá nhiều. Đây không phải là sự yếu đuối, mà là dấu hiệu nội tâm đang đòi hỏi sự chú ý sâu sắc.</p>
+                 <p class="text-[#d4af37] mt-2"><i class="fas fa-lightbulb mr-2"></i><strong>Giải pháp trung đạo:</strong> Đừng chạy trốn cũng đừng chìm đắm. Hãy dùng sự độc lập của bạn để kết nối với thiên nhiên hoặc sáng tạo. Hãy là ngọn hải đăng: đứng một mình nhưng tỏa sáng dẫn lối.</p>`, "growth");
+            } else {
+                addCard("Tâm Thức", "Sự Bình Yên Của Người Quan Sát", 
+                "Tâm trí bạn đang ở trạng thái cân bằng. Đây là thời điểm vàng để nuôi dưỡng lòng biết ơn và lan tỏa năng lượng tích cực mà không bị ngoại cảnh tác động.", "balance");
+            }
+
+            // 2. PHÂN TÍCH TRƯỞNG THÀNH (Số 6)
+            let isSix = [6, 16, 26].includes(day) || (counts[6]||0) >= 2;
+            if(isSix) {
+                addCard("Bài Học", "Nghệ Thuật Của Sự Không Hoàn Hảo", 
+                `<p>Vũ trụ đang gửi đến những bài học về sự bao dung thông qua những va vấp nhỏ. Bạn có xu hướng cầu toàn hoặc tự trách mình.</p>
+                 <p class="text-[#d4af37] mt-2"><i class="fas fa-check-circle mr-2"></i><strong>Chìa khóa:</strong> Hãy nhìn sai lầm như những bản nháp cần thiết để tạo nên kiệt tác. Đừng nhận lỗi chỉ để cho qua chuyện, hãy phân tích nó để trí tuệ nảy mầm.</p>`, "growth");
+            } else {
+                addCard("Hành Trình", "Dòng Chảy Thuận Lợi", 
+                "Mọi việc diễn ra suôn sẻ. Bạn được vũ trụ bảo hộ để thực hiện những dự định táo bạo. Hãy tự tin hành động.", "prosperity");
+            }
+
+            // 3. TÀI LỘC & KẾT NỐI (3, 8, 9)
+            let has3 = counts[3]>0, has8 = counts[8]>0, has9 = counts[9]>0;
+            
+            if(has9) {
+                addCard("Thành Tựu", "Mùa Gặt Của Nhân Quả", 
+                "Những nỗ lực trong quá khứ đang đơm hoa kết trái. Tài chính và uy tín là phần thưởng xứng đáng. Hãy mạnh dạn chia sẻ giá trị của bạn ra cộng đồng - càng cho đi, càng nhận lại.", "prosperity");
+            }
+            
+            if(has3 && has8) {
+                addCard("Cơ Hội Vàng", "Cân Bằng Giữa Kết Nối & Tận Hưởng", 
+                "Bạn có cả quý nhân phù trợ (Số 3) và năng lượng thịnh vượng (Số 8). Hãy dành 50% thời gian để ngoại giao, gặp gỡ đối tác và 50% để yêu thương, chăm sóc bản thân.", "prosperity");
+            } else if(has3) {
+                addCard("Kết Nối", "Cánh Cửa Của Những Duyên Lành", 
+                "Quý nhân đang chờ đợi ở bên ngoài cánh cửa. Hãy mở lòng, mỉm cười và giao tiếp. Mỗi cuộc gặp gỡ hôm nay đều mang đến một thông điệp quý giá.", "prosperity");
+            } else if(has8) {
+                addCard("Phong Cách Sống", "Nuôi Dưỡng Khu Vườn Tâm Hồn", 
+                "Đừng cảm thấy tội lỗi khi nghỉ ngơi. Sự thư giãn lúc này là khoản đầu tư cho năng lượng sáng tạo sắp tới. Hãy hào phóng với chính mình.", "prosperity");
+            } else if(!has9) {
+                addCard("Kỷ Luật", "Sức Mạnh Của Sự Tự Lực", 
+                "Giai đoạn này không dựa vào may mắn mà dựa vào bản lĩnh. Hãy rèn luyện sự kiên trì, 'đức năng thắng số'. Thành quả từ sự tự lực luôn bền vững nhất.", "growth");
+            }
+
+            // 4. SỨC KHỎE & CHỮA LÀNH (Số 4)
+            if(counts[4]>0) {
+                addCard("Thân Thể", "Gia Cố Nền Móng Ngôi Nhà", 
+                "Cơ thể bạn đang thì thầm cần sự quan tâm. Một nền móng vững chắc mới xây được tòa nhà cao. Hãy dành thời gian ăn uống thanh đạm, ngủ đủ giấc và sắp xếp lại không gian sống.", "mystic");
+            }
+
+            // 5. TẦM NHÌN & SỨ MỆNH (Số 7)
+            if(counts[7]>0) {
+                addCard("Tâm Linh", "Ngọn Đèn Soi Sáng Con Đường", 
+                "Trực giác của bạn đang rất mạnh. Đừng chỉ nhìn vào bề mặt của sự việc, hãy nhìn sâu vào bản chất. Đây là lúc học hỏi, nghiên cứu hoặc thiền định để nâng cao tần số rung động.", "mystic");
+            }
+
+            // 6. GIAO TIẾP (Số 5)
+            if(counts[5]>0) {
+                addCard("Ứng Xử", "Sức Mạnh Của Ái Ngữ", 
+                "Năng lượng thay đổi nhanh chóng có thể gây ra xung đột. Hãy biến tranh luận thành đối thoại, biến mâu thuẫn thành sự thấu hiểu. Lời nói của bạn có sức mạnh chữa lành hoặc gây thương nhớ - hãy lựa chọn khôn ngoan.", "balance");
+            }
+        }
+
+        // --- PDF EXPORT (PRO QUALITY) ---
+        function downloadPDF() {
+            const element = document.getElementById('printArea');
+            const btn = document.querySelector('button[onclick="downloadPDF()"]');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Đang xử lý...';
+
+            const opt = {
+                margin: 0,
+                filename: `Matrix_Wisdom_${new Date().getTime()}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#121212' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = '<i class="fas fa-file-export"></i> Xuất Bản (PDF)';
+            });
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
