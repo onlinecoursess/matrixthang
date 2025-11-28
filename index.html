@@ -174,17 +174,37 @@
         </div>
 
         <!-- Input Area -->
-        <div class="glass p-8 rounded-2xl mb-8 flex flex-col items-center justify-center text-center">
-            <label class="text-[#d4af37] text-xs uppercase tracking-[0.2em] mb-4">Nhập Ngày Sinh Của Bạn</label>
-            <div class="flex items-center justify-center gap-6 w-full max-w-sm">
-                <button onclick="adjustDay(-1)" class="text-gray-500 hover:text-[#d4af37] transition text-2xl"><i class="fas fa-chevron-left"></i></button>
-                <input type="number" id="inputDay" min="1" max="31" 
-                    class="bg-transparent text-6xl font-bold text-white text-center w-32 border-b border-gray-700 focus:border-[#d4af37] outline-none serif-font" 
-                    placeholder="00" onchange="calculateMatrix()">
-                <button onclick="adjustDay(1)" class="text-gray-500 hover:text-[#d4af37] transition text-2xl"><i class="fas fa-chevron-right"></i></button>
+            <div class="glass p-8 rounded-2xl mb-8 flex flex-col items-center justify-center">
+            <h3 class="text-[#d4af37] text-sm uppercase tracking-[0.2em] mb-6 border-b border-[#d4af37]/30 pb-2">Nhập Thông Tin Cá Nhân</h3>
+            
+            <div class="w-full max-w-md space-y-5">
+                <!-- Nhập Họ Tên -->
+                <div class="text-left">
+                    <label class="text-gray-400 text-xs uppercase ml-1 mb-1 block">Họ và Tên</label>
+                    <input type="text" id="fullName" 
+                        class="input-custom w-full rounded-lg py-3 px-4 text-white placeholder-gray-600 focus:border-[#d4af37] transition" 
+                        placeholder="Ví dụ: Nguyễn Văn A">
+                </div>
+
+                <!-- Nhập Ngày Sinh -->
+                <div class="text-left">
+                    <label class="text-gray-400 text-xs uppercase ml-1 mb-1 block">Ngày tháng năm sinh</label>
+                    <input type="date" id="birthDate" 
+                        class="input-custom w-full rounded-lg py-3 px-4 text-white focus:border-[#d4af37] transition appearance-none">
+                </div>
+
+                <!-- Nút Tra Cứu -->
+                <button onclick="calculateMatrix()" 
+                    class="btn-gold w-full py-3 rounded-lg uppercase tracking-wider font-bold shadow-lg hover:shadow-[#d4af37]/40 mt-4">
+                    <i class="fas fa-fingerprint mr-2"></i> Giải Mã Năng Lượng
+                </button>
             </div>
-            <p class="text-gray-500 text-xs mt-4 italic">Dữ liệu được đồng bộ theo thời gian thực (Tháng/Năm hiện tại)</p>
+
+            <p class="text-gray-500 text-xs mt-6 italic">
+                * Hệ thống sẽ lấy <span class="text-[#d4af37]">Thông tin</span> của bạn để phân tích trường năng lượng trong tháng hiện tại.
+            </p>
         </div>
+
 
         <!-- REPORT CONTENT -->
         <div id="printArea" class="glass p-10 rounded-2xl min-h-[800px]">
@@ -206,7 +226,7 @@
                 <!-- Empty State -->
                 <div id="welcomeMessage" class="text-center py-20 opacity-40">
                     <i class="fas fa-compass text-6xl mb-4"></i>
-                    <p class="text-xl font-light">Hãy nhập ngày sinh để giải mã bản đồ tâm thức.</p>
+                    <p class="text-xl font-light">Hãy nhập thông tin để giải mã bản đồ tâm thức.</p>
                 </div>
 
                 <!-- Results Grid -->
@@ -412,20 +432,39 @@
 
         // --- CORE CALCULATION & RENDERING (Giữ nguyên logic gốc) ---
         function calculateMatrix() {
-            const day = parseInt(document.getElementById('inputDay').value);
-            if(!day || day < 1 || day > 31) return;
+            // 1. Lấy dữ liệu
+            const nameInput = document.getElementById('fullName').value.trim();
+            const dateInput = document.getElementById('birthDate').value;
 
+            // 2. Kiểm tra
+            if (!nameInput || !dateInput) {
+                alert("Vui lòng nhập đầy đủ Họ tên và Ngày sinh!");
+                return;
+            }
+
+            // 3. Xử lý dữ liệu hiển thị (Chuyển yyyy-mm-dd thành dd/mm/yyyy)
+            const [yearIn, monthIn, dayIn] = dateInput.split('-'); // Tách chuỗi từ input
+            const fullBirthDate = `${dayIn}/${monthIn}/${yearIn}`; // Ghép lại thành định dạng VN
+
+            // 4. Lấy số 'Ngày' để tính toán (Giữ nguyên logic cũ)
+            const day = parseInt(dayIn); 
+
+            // Lấy thời gian thực (Tháng/Năm hiện tại) cho chu kỳ năng lượng
             const m = currentDate.getMonth() + 1;
             const y = currentDate.getFullYear();
             
-            // UI Updates
-            document.getElementById('reportDate').innerText = `Dữ liệu phân tích Ngày sinh: ${day} • Thời điểm: Tháng ${m}/${y}`;
+            // 5. Cập nhật giao diện (Đã sửa dòng hiển thị Ngày sinh full)
+            document.getElementById('reportDate').innerHTML = `
+                <span class="block text-2xl text-white font-bold mb-2 uppercase tracking-wide">${nameInput}</span>
+                <span class="text-sm">Ngày sinh: <b class="text-[#d4af37]">${fullBirthDate}</b> • Chu kỳ năng lượng: Tháng ${m}/${y}</span>
+            `;
+
             document.getElementById('welcomeMessage').classList.add('hidden');
             document.getElementById('resultContainer').classList.remove('hidden');
             document.getElementById('footerSignature').classList.remove('hidden');
             document.getElementById('dailyVibe').classList.remove('hidden');
 
-            // Matrix Logic
+            // --- LOGIC TÍNH TOÁN MA TRẬN (GIỮ NGUYÊN) ---
             let raw = `${day}${m}${y}`;
             let n1 = raw.split('').reduce((a,b)=>a+parseInt(b),0);
             let n2 = n1.toString().split('').reduce((a,b)=>a+parseInt(b),0);
