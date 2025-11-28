@@ -1,23 +1,21 @@
 
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matrix Wisdom - Minh Triết Năng Lượng</title>
+    <title>Matrix Wisdom - Minh Triết Năng Lượng (Pro Version)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Tích hợp Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
             --bg-dark: #121212;
-            --card-bg: #1e1e24;
             --gold: #d4af37;
-            --accent-blue: #3b82f6;
-            --accent-purple: #8b5cf6;
             --text-main: #e2e8f0;
         }
 
@@ -27,8 +25,8 @@
             color: var(--text-main);
             min-height: 100vh;
             background-image: 
-                linear-gradient(to bottom, rgba(18, 18, 18, 0.9), rgba(18, 18, 18, 0.95)),
-                url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2000&auto=format&fit=crop');
+                linear-gradient(to bottom, rgba(18, 18, 18, 0.95), rgba(18, 18, 18, 0.98)),
+                url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2000&auto=format&fit=crop');
             background-size: cover;
             background-attachment: fixed;
         }
@@ -37,8 +35,8 @@
 
         /* Glass Panel */
         .glass {
-            background: rgba(30, 30, 36, 0.7);
-            backdrop-filter: blur(16px);
+            background: rgba(30, 30, 36, 0.6);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
@@ -47,173 +45,361 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: 0.3s;
+            color: white;
         }
         .input-custom:focus {
             border-color: var(--gold);
-            background: rgba(255, 255, 255, 0.1);
             outline: none;
         }
 
         /* Buttons */
         .btn-gold {
-            background: linear-gradient(135deg, #d4af37, #f3e5ab, #d4af37);
-            background-size: 200% auto;
-            color: #1a1a1a;
-            transition: 0.5s;
+            background: linear-gradient(135deg, #d4af37, #f3e5ab, #b48811);
+            color: #000;
+            font-weight: 600;
+            transition: 0.3s;
         }
-        .btn-gold:hover { background-position: right center; transform: translateY(-2px); }
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
 
         .btn-outline {
             border: 1px solid var(--gold);
             color: var(--gold);
-            transition: 0.3s;
         }
         .btn-outline:hover { background: var(--gold); color: #000; }
-
-        /* PDF Print Area Styling */
-        #printArea {
-            background: #121212 !important;
-            color: #fff;
-            position: relative;
-            overflow: hidden;
-        }
         
-        /* Decorative Elements */
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: 0;
-            opacity: 0.4;
+        .btn-danger {
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+        .btn-danger:hover { background: #ef4444; color: white; }
+
+        /* Print Area specific */
+    #printArea {
+    background: #121212 !important; /* Màu nền mặc định phải đen */
+    color: #fff;
+    position: relative;
+    /* Đảm bảo nội dung không bị tràn ra ngoài gây vỡ layout khi in */
+    overflow: hidden; 
+}
+
+        /* Typography highlighting */
+        .highlight { color: #d4af37; font-weight: 600; }
+        .list-dot li { margin-bottom: 6px; position: relative; padding-left: 15px; }
+        .list-dot li::before { content: "•"; color: #d4af37; position: absolute; left: 0; }
+        
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 9999;
+            display: none; align-items: center; justify-content: center;
         }
     </style>
 </head>
-<body class="flex items-center justify-center p-4">
+<body class="flex flex-col items-center justify-center p-4">
 
-    <!-- LOGIN -->
-    <div id="loginScreen" class="w-full max-w-md glass rounded-2xl p-10 relative hidden animate-fade-in-up">
+    <!-- Loading -->
+    <div id="loadingOverlay">
+        <i class="fas fa-circle-notch fa-spin text-4xl text-[#d4af37]"></i>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="w-full max-w-md glass rounded-2xl p-10 relative hidden animate-fade-in mt-10">
         <div class="text-center mb-10">
-            <i class="fas fa-galaxy text-5xl text-[#d4af37] mb-4 animate-spin-slow"></i>
+            <i class="fas fa-infinity text-5xl text-[#d4af37] mb-4"></i>
             <h1 class="text-3xl font-bold text-[#d4af37] serif-font">Matrix Wisdom</h1>
-            <p class="text-gray-400 text-sm mt-3 tracking-widest uppercase">Cổng Tri Thức Nội Tại</p>
+            <p class="text-gray-400 text-xs mt-3 uppercase tracking-widest">Cổng Tri Thức Nội Tại</p>
         </div>
-        
         <form onsubmit="handleLogin(event)" class="space-y-6">
-            <input type="text" id="username" class="input-custom w-full rounded-lg py-3 px-4 text-white" placeholder="Tên truy cập">
-            <input type="password" id="password" class="input-custom w-full rounded-lg py-3 px-4 text-white" placeholder="Mật mã">
-            <p id="loginError" class="text-red-400 text-sm hidden text-center">Thông tin không chính xác</p>
-            <button type="submit" class="btn-gold w-full py-3 rounded-lg font-bold tracking-wider uppercase">Mở Cổng</button>
+            <input type="text" id="username" class="input-custom w-full rounded-lg py-3 px-4" placeholder="Tên truy cập" required>
+            <input type="password" id="password" class="input-custom w-full rounded-lg py-3 px-4" placeholder="Mật mã" required>
+            <p id="loginError" class="text-red-400 text-sm hidden text-center">Thông tin không chính xác hoặc lỗi kết nối</p>
+            <button type="submit" class="btn-gold w-full py-3 rounded-lg uppercase tracking-wider">Mở Cổng</button>
         </form>
     </div>
 
-    <!-- APP INTERFACE -->
-    <div id="appScreen" class="w-full max-w-5xl hidden pb-10">
+    <!-- MAIN APP -->
+    <div id="appScreen" class="w-full max-w-5xl hidden pb-10 mt-10">
         
         <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass p-6 rounded-2xl">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass p-6 rounded-2xl border-t border-[#d4af37]/30">
             <div class="flex items-center gap-4 mb-4 md:mb-0">
-                <div class="h-12 w-12 rounded-full bg-gradient-to-br from-[#d4af37] to-[#8b5cf6] flex items-center justify-center text-black font-bold text-xl">
-                    M
-                </div>
+                <i class="fas fa-sun text-3xl text-[#d4af37] animate-pulse"></i>
                 <div>
-                    <h2 class="text-xl font-bold text-white serif-font">Bản Tin Năng Lượng</h2>
-                    <p class="text-xs text-gray-400 uppercase tracking-widest">Daily Energy Forecast</p>
+                    <h2 class="text-xl font-bold text-white serif-font">Báo Cáo Năng Lượng</h2>
+                    <p class="text-xs text-gray-400 uppercase tracking-widest">Phiên bản chuyên sâu</p>
                 </div>
             </div>
-            <div class="flex gap-4">
-                <button onclick="downloadPDF()" class="btn-outline px-6 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
-                    <i class="fas fa-file-export"></i> Xuất Bản (PDF)
+            <div class="flex gap-4 items-center">
+                <span id="welcomeUser" class="text-sm text-[#d4af37] font-semibold mr-2"></span>
+                <button onclick="downloadPDF()" class="btn-outline px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition hover:scale-105">
+                    <i class="fas fa-file-pdf"></i> Xuất PDF
                 </button>
-                <button onclick="handleLogout()" class="text-gray-400 hover:text-white px-4">
-                    <i class="fas fa-power-off"></i>
+                <button onclick="handleLogout()" class="text-gray-400 hover:text-white px-3" title="Đăng xuất">
+                    <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
         </header>
 
-        <!-- Input Section -->
-        <div class="glass p-8 rounded-2xl mb-8 flex flex-col items-center justify-center text-center">
-            <label class="text-[#d4af37] text-sm uppercase tracking-[0.2em] mb-4">Nhập Ngày Sinh Của Bạn</label>
-            <div class="flex items-center justify-center gap-4 w-full max-w-sm">
-                <button onclick="adjustDay(-1)" class="text-gray-500 hover:text-white transition text-2xl"><i class="fas fa-chevron-left"></i></button>
-                <input type="number" id="inputDay" min="1" max="31" 
-                    class="bg-transparent text-5xl font-bold text-white text-center w-32 border-b-2 border-gray-700 focus:border-[#d4af37] outline-none serif-font" 
-                    placeholder="01" onchange="calculateMatrix()">
-                <button onclick="adjustDay(1)" class="text-gray-500 hover:text-white transition text-2xl"><i class="fas fa-chevron-right"></i></button>
+        <!-- ADMIN DASHBOARD (Only visible for admin) -->
+        <div id="adminPanel" class="hidden glass p-8 rounded-2xl mb-8 border border-[#d4af37]/50">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-[#d4af37] serif-font"><i class="fas fa-users-cog mr-2"></i>Quản Trị Người Dùng</h3>
+                <span class="text-xs bg-[#d4af37] text-black px-2 py-1 rounded font-bold">ADMIN ACCESS</span>
             </div>
-            <p class="text-gray-500 text-sm mt-4 italic">Hệ thống tự động đồng bộ với năng lượng Tháng & Năm hiện tại</p>
+            
+            <!-- Add User Form -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-white/5 p-4 rounded-xl">
+                <input type="text" id="newUsername" placeholder="Username mới" class="input-custom rounded px-3 py-2 text-sm">
+                <input type="text" id="newPassword" placeholder="Password (Plaintext)" class="input-custom rounded px-3 py-2 text-sm">
+                <button onclick="addNewUser()" class="btn-gold rounded px-4 py-2 text-sm font-bold">Thêm User</button>
+            </div>
+
+            <!-- User List Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="text-xs uppercase bg-white/10 text-[#d4af37]">
+                        <tr>
+                            <th class="px-4 py-3 rounded-tl-lg">ID</th>
+                            <th class="px-4 py-3">Username</th>
+                            <th class="px-4 py-3">Password</th>
+                            <th class="px-4 py-3">Role</th>
+                            <th class="px-4 py-3 rounded-tr-lg text-center">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <!-- Data injected by JS -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- REPORT AREA (PRINTABLE) -->
+        <!-- Input Area -->
+        <div class="glass p-8 rounded-2xl mb-8 flex flex-col items-center justify-center text-center">
+            <label class="text-[#d4af37] text-xs uppercase tracking-[0.2em] mb-4">Nhập Ngày Sinh Của Bạn</label>
+            <div class="flex items-center justify-center gap-6 w-full max-w-sm">
+                <button onclick="adjustDay(-1)" class="text-gray-500 hover:text-[#d4af37] transition text-2xl"><i class="fas fa-chevron-left"></i></button>
+                <input type="number" id="inputDay" min="1" max="31" 
+                    class="bg-transparent text-6xl font-bold text-white text-center w-32 border-b border-gray-700 focus:border-[#d4af37] outline-none serif-font" 
+                    placeholder="00" onchange="calculateMatrix()">
+                <button onclick="adjustDay(1)" class="text-gray-500 hover:text-[#d4af37] transition text-2xl"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <p class="text-gray-500 text-xs mt-4 italic">Dữ liệu được đồng bộ theo thời gian thực (Tháng/Năm hiện tại)</p>
+        </div>
+
+        <!-- REPORT CONTENT -->
         <div id="printArea" class="glass p-10 rounded-2xl min-h-[800px]">
-            <!-- Decorative Orbs -->
-            <div class="orb bg-blue-500 top-[-100px] left-[-100px] w-[300px] h-[300px]"></div>
-            <div class="orb bg-purple-500 bottom-[-100px] right-[-100px] w-[300px] h-[300px]"></div>
+            <!-- Decorative Elements -->
+            <div class="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+                <i class="fas fa-fingerprint text-9xl text-white"></i>
+            </div>
 
             <div class="relative z-10">
-                <!-- Report Header -->
-                <div class="text-center mb-12 border-b border-gray-700/50 pb-8">
-                    <div class="inline-block px-4 py-1 rounded-full border border-[#d4af37]/30 text-[#d4af37] text-xs uppercase tracking-widest mb-4">
-                        Secure Report • Authorized Access
-                    </div>
-                    <h1 class="text-4xl md:text-5xl font-bold text-white serif-font mb-2">Thông Điệp Định Mệnh</h1>
+                <!-- Title Section -->
+                <div class="text-center mb-12 border-b border-gray-800 pb-8">
+                    <h1 class="text-4xl md:text-5xl font-bold text-[#d4af37] serif-font mb-3">Thông Điệp Định Mệnh</h1>
                     <p id="reportDate" class="text-gray-400 font-light text-lg">...</p>
-                    
-                    <!-- Tổng quan năng lượng -->
-                    <div id="dailyVibe" class="mt-6 hidden">
-                        <p class="text-xl text-[#d4af37] italic serif-font">" <span id="vibeText"></span> "</p>
+                    <div id="dailyVibe" class="mt-6 hidden bg-white/5 inline-block px-6 py-3 rounded-lg border border-white/10">
+                        <p class="text-lg text-white italic serif-font">" <span id="vibeText"></span> "</p>
                     </div>
                 </div>
 
-                <!-- Welcome State -->
-                <div id="welcomeMessage" class="text-center py-20 opacity-50">
-                    <i class="fas fa-fingerprint text-6xl mb-4"></i>
-                    <p class="text-xl font-light">Vui lòng nhập Ngày Sinh để khởi chạy phân tích.</p>
+                <!-- Empty State -->
+                <div id="welcomeMessage" class="text-center py-20 opacity-40">
+                    <i class="fas fa-compass text-6xl mb-4"></i>
+                    <p class="text-xl font-light">Hãy nhập ngày sinh để giải mã bản đồ tâm thức.</p>
                 </div>
 
                 <!-- Results Grid -->
-                <div id="resultContainer" class="hidden grid grid-cols-1 gap-8">
-                    <!-- Cards will be injected here -->
+                <div id="resultContainer" class="hidden grid grid-cols-1 gap-6">
+                    <!-- Cards injected via JS -->
                 </div>
 
                 <!-- Footer -->
-                <div id="footerSignature" class="hidden mt-16 pt-8 border-t border-gray-700/50 flex justify-between items-end">
-                    <div>
-                        <p class="text-[#d4af37] font-bold text-lg serif-font">Matrix Wisdom</p>
-                        <p class="text-gray-500 text-xs">Phân tích dựa trên thuật toán năng lượng số học cổ đại.</p>
+                <div id="footerSignature" class="hidden mt-16 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="text-center md:text-left">
+                        <p class="text-[#d4af37] font-bold text-lg serif-font">Matrix Wisdom System</p>
+                        <p class="text-gray-600 text-xs uppercase tracking-wider">Báo cáo bảo mật cá nhân</p>
                     </div>
-                   
+                    <div class="text-xs text-gray-600">
+                        Authorized by Heart Sunrise
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const USERS = { 'user': '123456', 'admin': '123456' };
-        const STORAGE_KEY = 'matrix_wisdom_pro';
+        // ==========================================
+        // CẤU HÌNH SUPABASE
+        // ==========================================
+        const SUPABASE_URL = 'https://wjedhoohyukajjwoosef.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqZWRob29oeXVrYWpqd29vc2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMjQ3OTEsImV4cCI6MjA3OTkwMDc5MX0.eYbnfEqh4OePs5tDhk4D1dP28T9uT6tzXy7wyY1neEY'; 
+        
+        // SỬA LỖI: Đổi tên biến 'supabase' thành 'db' để tránh trùng với thư viện toàn cục
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const STORAGE_KEY = 'matrix_wisdom_session_v5';
         const currentDate = new Date();
+        let currentUserRole = null;
 
-        // --- AUTH SYSTEM ---
-        function init() {
-            if(localStorage.getItem(STORAGE_KEY)) showApp();
-            else document.getElementById('loginScreen').classList.remove('hidden');
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim().toLowerCase();
-            const p = document.getElementById('password').value.trim();
-            if(USERS[u] === p) {
-                localStorage.setItem(STORAGE_KEY, 'true');
-                document.getElementById('loginScreen').classList.add('hidden');
-                showApp();
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
+        // --- AUTH & INIT ---
+        async function init() {
+            try {
+                const sessionStr = localStorage.getItem(STORAGE_KEY);
+                const session = sessionStr ? JSON.parse(sessionStr) : null;
+                
+                if(session && session.isLoggedIn) {
+                    currentUserRole = session.role;
+                    document.getElementById('welcomeUser').innerText = `Xin chào, ${session.username}`;
+                    showApp();
+                } else {
+                    document.getElementById('loginScreen').classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error("Init error:", e);
+                // Nếu lỗi, hiển thị login để an toàn
+                document.getElementById('loginScreen').classList.remove('hidden');
             }
         }
 
-        function handleLogout() { localStorage.removeItem(STORAGE_KEY); location.reload(); }
-        function showApp() { document.getElementById('appScreen').classList.remove('hidden'); }
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('loginError');
+            const loading = document.getElementById('loadingOverlay');
+
+            loading.style.display = 'flex';
+            errorMsg.classList.add('hidden');
+
+            try {
+                // Truy vấn vào bảng app_users trong Supabase dùng biến 'db'
+                const { data, error } = await db
+                    .from('app_users')
+                    .select('*')
+                    .eq('username', u)
+                    .eq('password', p) // Kiểm tra password plaintext
+                    .single();
+
+                loading.style.display = 'none';
+
+                if (error || !data) {
+                    errorMsg.innerText = "Tên đăng nhập hoặc mật khẩu không đúng.";
+                    errorMsg.classList.remove('hidden');
+                } else {
+                    // Đăng nhập thành công
+                    const sessionData = { isLoggedIn: true, username: data.username, role: data.role };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+                    currentUserRole = data.role;
+                    document.getElementById('welcomeUser').innerText = `Xin chào, ${data.username}`;
+                    
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    showApp();
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                console.error(err);
+                errorMsg.innerText = "Lỗi kết nối Server.";
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() { 
+            localStorage.removeItem(STORAGE_KEY); 
+            location.reload(); 
+        }
+
+        function showApp() { 
+            document.getElementById('appScreen').classList.remove('hidden'); 
+            
+            // Nếu là Admin, hiển thị bảng quản trị và load danh sách user
+            if(currentUserRole === 'admin') {
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadUserList();
+            }
+        }
         
+        // --- ADMIN FUNCTIONS ---
+        async function loadUserList() {
+            if(currentUserRole !== 'admin') return;
+            
+            const { data: users, error } = await db
+                .from('app_users')
+                .select('*')
+                .order('id', { ascending: true });
+
+            if(error) {
+                alert('Lỗi tải danh sách user');
+                return;
+            }
+
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-white/5 hover:bg-white/5 transition";
+                tr.innerHTML = `
+                    <td class="px-4 py-3">${user.id}</td>
+                    <td class="px-4 py-3 font-semibold text-white">${user.username}</td>
+                    <td class="px-4 py-3 font-mono text-gray-400">${user.password}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs uppercase ${user.role === 'admin' ? 'bg-[#d4af37] text-black' : 'bg-gray-700 text-white'}">${user.role}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${user.username !== 'admin' ? `<button onclick="deleteUser(${user.id})" class="btn-danger px-3 py-1 rounded text-xs"><i class="fas fa-trash"></i> Xóa</button>` : '<span class="text-gray-500 text-xs">Mặc định</span>'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function addNewUser() {
+            const u = document.getElementById('newUsername').value.trim();
+            const p = document.getElementById('newPassword').value.trim();
+
+            if(!u || !p) return alert("Vui lòng nhập đủ thông tin");
+
+            const loading = document.getElementById('loadingOverlay');
+            loading.style.display = 'flex';
+
+            const { error } = await db
+                .from('app_users')
+                .insert([{ username: u, password: p, role: 'user' }]); // Mặc định tạo user thường
+
+            loading.style.display = 'none';
+
+            if(error) {
+                alert("Lỗi: " + error.message);
+            } else {
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newPassword').value = '';
+                loadUserList(); // Tải lại danh sách
+            }
+        }
+
+        async function deleteUser(id) {
+            if(!confirm("Bạn có chắc muốn xóa user này?")) return;
+            
+            const loading = document.getElementById('loadingOverlay');
+            loading.style.display = 'flex';
+
+            const { error } = await db
+                .from('app_users')
+                .delete()
+                .eq('id', id);
+
+            loading.style.display = 'none';
+
+            if(error) {
+                alert("Lỗi xóa: " + error.message);
+            } else {
+                loadUserList();
+            }
+        }
+
+        // --- CORE UI LOGIC ---
+
         function adjustDay(delta) {
             const input = document.getElementById('inputDay');
             let val = parseInt(input.value) || 0;
@@ -224,7 +410,7 @@
             calculateMatrix();
         }
 
-        // --- MATRIX LOGIC & CONTENT ---
+        // --- CORE CALCULATION & RENDERING (Giữ nguyên logic gốc) ---
         function calculateMatrix() {
             const day = parseInt(document.getElementById('inputDay').value);
             if(!day || day < 1 || day > 31) return;
@@ -232,33 +418,32 @@
             const m = currentDate.getMonth() + 1;
             const y = currentDate.getFullYear();
             
-            // Render Header Data
-            document.getElementById('reportDate').innerText = `Ngày sinh: ${day} • Thời điểm phân tích: Tháng ${m}/${y}`;
+            // UI Updates
+            document.getElementById('reportDate').innerText = `Dữ liệu phân tích Ngày sinh: ${day} • Thời điểm: Tháng ${m}/${y}`;
             document.getElementById('welcomeMessage').classList.add('hidden');
             document.getElementById('resultContainer').classList.remove('hidden');
             document.getElementById('footerSignature').classList.remove('hidden');
             document.getElementById('dailyVibe').classList.remove('hidden');
 
-            // Calculation Logic
+            // Matrix Logic
             let raw = `${day}${m}${y}`;
-            let digits = raw.split('').map(Number);
-            let n1 = digits.reduce((a,b)=>a+b,0);
-            let n2 = n1.toString().split('').reduce((a,b)=>a+Number(b),0);
+            let n1 = raw.split('').reduce((a,b)=>a+parseInt(b),0);
+            let n2 = n1.toString().split('').reduce((a,b)=>a+parseInt(b),0);
             let firstDigit = day < 10 ? day : Math.floor(day/10);
             let n3 = n1 - (2 * firstDigit);
-            let n4 = Math.abs(n3).toString().split('').reduce((a,b)=>a+Number(b),0);
+            let n4 = Math.abs(n3).toString().split('').reduce((a,b)=>a+parseInt(b),0);
 
-            let all = raw + n1 + n2 + n3 + n4;
+            let allStr = raw + n1 + n2 + n3 + n4;
             let counts = {};
-            for(let c of all) counts[c] = (counts[c]||0)+1;
+            for(let char of allStr) counts[char] = (counts[char]||0)+1;
 
-            // Generate Daily Vibe Quote (Randomized based on num1)
+            // Random Vibe Quote
             const vibes = [
-                "Hôm nay là ngày để gieo hạt giống của sự thịnh vượng.",
-                "Sự tĩnh lặng mang lại câu trả lời rõ ràng nhất.",
-                "Hãy can đảm bước ra khỏi vùng an toàn, phép màu đang chờ.",
-                "Kết nối chân thành tạo nên sức mạnh vô biên.",
-                "Kỷ luật là cầu nối giữa mục tiêu và thành tựu."
+                "Năng lượng của bạn là chiếc chìa khóa mở cánh cửa định mệnh.",
+                "Sự tĩnh lặng hôm nay kiến tạo nên thành tựu ngày mai.",
+                "Chuyển hóa nghiệp lực thành nguyện lực.",
+                "Kết nối với bên trong để tỏa sáng ra bên ngoài.",
+                "Kỷ luật là tự do đích thực."
             ];
             document.getElementById('vibeText').innerText = vibes[n1 % vibes.length];
 
@@ -269,124 +454,217 @@
             const container = document.getElementById('resultContainer');
             container.innerHTML = '';
 
-            // Card Builder Function (Trung đạo & Đa dạng)
-            const addCard = (theme, title, content, type) => {
-                let gradient = '';
-                let icon = '';
-                
-                // Color Themes
-                if(type === 'mystic') { // Số 7, 4 (Tâm linh/Chữa lành)
-                    gradient = 'from-purple-900/40 to-blue-900/40 border-purple-500/30';
-                    icon = 'fa-moon';
-                } else if(type === 'growth') { // Số 1, 6 (Thử thách)
-                    gradient = 'from-red-900/30 to-orange-900/30 border-orange-500/30';
-                    icon = 'fa-fire';
-                } else if(type === 'prosperity') { // Số 8, 9, 3 (Tài lộc)
-                    gradient = 'from-yellow-900/30 to-amber-900/30 border-[#d4af37]/40';
-                    icon = 'fa-gem';
-                } else { // Balance
-                    gradient = 'from-emerald-900/30 to-teal-900/30 border-emerald-500/30';
-                    icon = 'fa-leaf';
-                }
+            // Helper to create beautiful cards
+            const addCard = (category, title, content, type) => {
+                let theme = {
+                    'water': { bg: 'from-blue-900/40 to-slate-900/40', border: 'border-blue-500/50', icon: 'fa-water', label: 'Tâm Thức (Thủy)' },
+                    'fire': { bg: 'from-red-900/30 to-orange-900/30', border: 'border-red-500/50', icon: 'fa-fire', label: 'Nhiệt Huyết (Hỏa)' },
+                    'wood': { bg: 'from-green-900/30 to-emerald-900/30', border: 'border-green-500/50', icon: 'fa-tree', label: 'Kết Nối (Mộc)' },
+                    'metal': { bg: 'from-gray-800/50 to-gray-900/50', border: 'border-[#d4af37]/50', icon: 'fa-gem', label: 'Thành Tựu (Kim)' },
+                    'earth': { bg: 'from-amber-900/30 to-yellow-900/30', border: 'border-yellow-500/50', icon: 'fa-mountain', label: 'Thực Tế (Thổ)' }
+                }[type] || { bg: 'from-gray-800 to-gray-900', border: 'border-gray-500', icon: 'fa-star', label: 'Tổng Quan' };
 
                 container.innerHTML += `
-                <div class="bg-gradient-to-r ${gradient} border-l-4 p-8 rounded-r-xl shadow-lg relative overflow-hidden break-inside-avoid">
-                    <div class="absolute right-4 top-4 opacity-10 text-6xl"><i class="fas ${icon}"></i></div>
-                    
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="text-xs font-bold px-3 py-1 rounded bg-white/10 uppercase tracking-widest text-white/80">${theme}</span>
+                <div class="bg-gradient-to-r ${theme.bg} border-l-4 ${theme.border} p-6 md:p-8 rounded-r-xl shadow-lg relative break-inside-avoid mb-4">
+                    <div class="absolute right-6 top-6 opacity-10 text-5xl"><i class="fas ${theme.icon}"></i></div>
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-[10px] font-bold px-2 py-1 rounded bg-white/5 border border-white/10 uppercase tracking-widest text-[#d4af37]">${category}</span>
                     </div>
-                    
-                    <h3 class="text-2xl font-bold text-white mb-3 serif-font">${title}</h3>
-                    <div class="text-gray-300 leading-relaxed text-justify font-light text-sm md:text-base space-y-2">
+                    <h3 class="text-2xl font-bold text-white mb-4 serif-font">${title}</h3>
+                    <div class="text-gray-300 leading-relaxed text-sm md:text-base font-light space-y-3 text-justify">
                         ${content}
                     </div>
                 </div>`;
             };
 
-            /* === CONTENT LOGIC (Nội dung Đa dạng & Tích cực) === */
+            // ================== DATA LOGIC (GIỮ NGUYÊN) ==================
 
-            // 1. PHÂN TÍCH TÂM THỨC (Số 1)
-            if((counts[1] || 0) >= 3) {
-                addCard("Tâm Thức", "Chuyển Hóa Nỗi Cô Đơn Thành Sức Mạnh", 
-                `<p><strong>Hiện trạng:</strong> Bạn có thể cảm thấy lạc lõng hoặc suy nghĩ quá nhiều. Đây không phải là sự yếu đuối, mà là dấu hiệu nội tâm đang đòi hỏi sự chú ý sâu sắc.</p>
-                 <p class="text-[#d4af37] mt-2"><i class="fas fa-lightbulb mr-2"></i><strong>Giải pháp trung đạo:</strong> Đừng chạy trốn cũng đừng chìm đắm. Hãy dùng sự độc lập của bạn để kết nối với thiên nhiên hoặc sáng tạo. Hãy là ngọn hải đăng: đứng một mình nhưng tỏa sáng dẫn lối.</p>`, "growth");
+            if ((counts[1] || 0) >= 3) {
+                addCard("Báo Động Tâm Thức", "Vượt Thoát Bóng Tối Của Sự Cô Độc (Nhiều Số 1)", 
+                `<p>Nội tâm bạn đang đối diện với những cơn sóng lớn. Nếu giam mình trong bốn bức tường, bóng tối của sự cô độc sẽ lấn át, dẫn đến những suy nghĩ tiêu cực miên man và cảm giác bế tắc.</p>
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-bolt mr-2"></i>HÀNH ĐỘNG CẦN THIẾT:</p>
+                    <ul class="list-dot text-sm pl-2">
+                        <li>Tuyệt đối không ở một mình quá lâu. Hãy bước ra ngoài thiên nhiên, chạy bộ, tưới cây hoặc làm bất cứ việc gì để tay chân bận rộn.</li>
+                        <li>Gia tăng trải nghiệm mới: Đi xem phim, cafe, học kỹ năng mới. Sự vận động của thân thể sẽ phá vỡ sự trì trệ của tâm trí.</li>
+                    </ul>
+                 </div>`, "water");
             } else {
-                addCard("Tâm Thức", "Sự Bình Yên Của Người Quan Sát", 
-                "Tâm trí bạn đang ở trạng thái cân bằng. Đây là thời điểm vàng để nuôi dưỡng lòng biết ơn và lan tỏa năng lượng tích cực mà không bị ngoại cảnh tác động.", "balance");
+                addCard("Tâm Thái", "Sự Bình Yên Nội Tại (Ít Số 1)", 
+                "Dòng chảy năng lượng xung quanh bạn khá êm đềm. Sự hỗn loạn bên ngoài không đủ sức làm lay động tâm thức. Đây là thời điểm tuyệt vời để tận hưởng sự nhẹ nhàng và lan tỏa năng lượng tích cực.", "water");
             }
 
-            // 2. PHÂN TÍCH TRƯỞNG THÀNH (Số 6)
-            let isSix = [6, 16, 26].includes(day) || (counts[6]||0) >= 2;
-            if(isSix) {
-                addCard("Bài Học", "Nghệ Thuật Của Sự Không Hoàn Hảo", 
-                `<p>Vũ trụ đang gửi đến những bài học về sự bao dung thông qua những va vấp nhỏ. Bạn có xu hướng cầu toàn hoặc tự trách mình.</p>
-                 <p class="text-[#d4af37] mt-2"><i class="fas fa-check-circle mr-2"></i><strong>Chìa khóa:</strong> Hãy nhìn sai lầm như những bản nháp cần thiết để tạo nên kiệt tác. Đừng nhận lỗi chỉ để cho qua chuyện, hãy phân tích nó để trí tuệ nảy mầm.</p>`, "growth");
+            let isSpecial6 = [6, 16, 26].includes(day);
+            if (isSpecial6 || (counts[6]||0) >= 1) {
+                let title = (counts[6]||0) >= 2 ? "Thử Thách Lớn Để Thức Tỉnh (Nhiều Số 6)" : "Bài Học Từ Sự Không Hoàn Hảo (1 Số 6)";
+                let content = (counts[6]||0) >= 2 
+                    ? "Bạn có thể đối diện với những quyết định thiếu may mắn hoặc mất mát tài chính do sự thiếu khôn ngoan nhất thời. Đừng dằn vặt, đây là 'học phí' cần thiết để phá vỡ sự u mê."
+                    : "Bạn dễ gặp những sai lầm nhỏ nhặt, lắt nhắt. Những va vấp này giúp bạn tôi luyện bản lĩnh và nâng cấp sự lựa chọn của mình.";
+                
+                let warning = isSpecial6 
+                    ? `<p class="italic text-gray-400 mt-2 text-xs border-l-2 border-[#d4af37] pl-2">Lưu ý đặc biệt (Sinh ngày 6, 16, 26): Bạn có xu hướng tự nhận lỗi về mình một cách mặc định. Đừng trốn tránh bằng cách nhận lỗi cho xong chuyện. Hãy dũng cảm phân tích đúng sai để trưởng thành thực sự.</p>` 
+                    : "";
+
+                addCard("Trưởng Thành", title, 
+                `<p>${content}</p>
+                 ${warning}
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-check-circle mr-2"></i>LỜI KHUYÊN:</p>
+                    <p class="text-sm">Đừng quá an toàn. Hãy chấp nhận sai lầm như một phần tất yếu. Ngồi xuống phân tích nguyên nhân thất bại thay vì chìm trong cảm giác tội lỗi. Đó là cách duy nhất để chuyển hóa 'nghiệp' thành trí tuệ.</p>
+                 </div>`, "water");
             } else {
-                addCard("Hành Trình", "Dòng Chảy Thuận Lợi", 
-                "Mọi việc diễn ra suôn sẻ. Bạn được vũ trụ bảo hộ để thực hiện những dự định táo bạo. Hãy tự tin hành động.", "prosperity");
+                addCard("Dòng Chảy", "Sự Thuận Lợi Hanh Thông (Không Có Số 6)", 
+                "Bạn được vũ trụ ưu ái với dòng chảy năng lượng an toàn. Mọi quyết định đưa ra đều có tỷ lệ thành công cao. Hãy tự tin hành động mạnh mẽ.", "water");
             }
 
-            // 3. TÀI LỘC & KẾT NỐI (3, 8, 9)
-            let has3 = counts[3]>0, has8 = counts[8]>0, has9 = counts[9]>0;
-            
-            if(has9) {
-                addCard("Thành Tựu", "Mùa Gặt Của Nhân Quả", 
-                "Những nỗ lực trong quá khứ đang đơm hoa kết trái. Tài chính và uy tín là phần thưởng xứng đáng. Hãy mạnh dạn chia sẻ giá trị của bạn ra cộng đồng - càng cho đi, càng nhận lại.", "prosperity");
-            }
-            
-            if(has3 && has8) {
-                addCard("Cơ Hội Vàng", "Cân Bằng Giữa Kết Nối & Tận Hưởng", 
-                "Bạn có cả quý nhân phù trợ (Số 3) và năng lượng thịnh vượng (Số 8). Hãy dành 50% thời gian để ngoại giao, gặp gỡ đối tác và 50% để yêu thương, chăm sóc bản thân.", "prosperity");
-            } else if(has3) {
-                addCard("Kết Nối", "Cánh Cửa Của Những Duyên Lành", 
-                "Quý nhân đang chờ đợi ở bên ngoài cánh cửa. Hãy mở lòng, mỉm cười và giao tiếp. Mỗi cuộc gặp gỡ hôm nay đều mang đến một thông điệp quý giá.", "prosperity");
-            } else if(has8) {
-                addCard("Phong Cách Sống", "Nuôi Dưỡng Khu Vườn Tâm Hồn", 
-                "Đừng cảm thấy tội lỗi khi nghỉ ngơi. Sự thư giãn lúc này là khoản đầu tư cho năng lượng sáng tạo sắp tới. Hãy hào phóng với chính mình.", "prosperity");
-            } else if(!has9) {
-                addCard("Kỷ Luật", "Sức Mạnh Của Sự Tự Lực", 
-                "Giai đoạn này không dựa vào may mắn mà dựa vào bản lĩnh. Hãy rèn luyện sự kiên trì, 'đức năng thắng số'. Thành quả từ sự tự lực luôn bền vững nhất.", "growth");
+            if ((counts[3]||0) > 0) {
+                addCard("Cơ Hội Vàng", "Cánh Cửa Đón Quý Nhân (Số 3)", 
+                `<p>Vũ trụ đang sắp đặt những nhân duyên tốt đẹp: khách hàng, đối tác, thầy hiền bạn tốt. Họ mang đến cơ hội, tài lộc và niềm vui. Tuy nhiên, quý nhân chỉ xuất hiện khi bạn bước ra ngoài.</p>
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-door-open mr-2"></i>HÀNH ĐỘNG:</p>
+                    <p class="text-sm">Phá vỡ vỏ bọc an toàn. Chủ động giao tiếp, tham gia cộng đồng. Nếu bạn khép kín lúc này, bạn đang từ chối món quà thịnh vượng của cuộc đời.</p>
+                 </div>`, "wood");
             }
 
-            // 4. SỨC KHỎE & CHỮA LÀNH (Số 4)
-            if(counts[4]>0) {
-                addCard("Thân Thể", "Gia Cố Nền Móng Ngôi Nhà", 
-                "Cơ thể bạn đang thì thầm cần sự quan tâm. Một nền móng vững chắc mới xây được tòa nhà cao. Hãy dành thời gian ăn uống thanh đạm, ngủ đủ giấc và sắp xếp lại không gian sống.", "mystic");
+            if ((counts[8]||0) > 0) {
+                addCard("Phong Cách Sống", "Quyền Được Yêu Thương Bản Thân (Số 8)", 
+                `<p>Đây là thời điểm bạn được phép 'ích kỷ' một chút để chăm sóc chính mình. Nếu bạn cứ lao đi mà không biết nghỉ ngơi, cơ thể sẽ đình công (bệnh tật) vào giai đoạn Thủy.</p>
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-spa mr-2"></i>HÀNH ĐỘNG:</p>
+                    <p class="text-sm">Hãy hào phóng với bản thân. Tiêu tiền cho những niềm vui chính đáng, nghỉ ngơi tái tạo năng lượng. Sự hưởng thụ lúc này là nền tảng cho sức khỏe bền vững.</p>
+                 </div>`, "wood");
             }
 
-            // 5. TẦM NHÌN & SỨ MỆNH (Số 7)
-            if(counts[7]>0) {
-                addCard("Tâm Linh", "Ngọn Đèn Soi Sáng Con Đường", 
-                "Trực giác của bạn đang rất mạnh. Đừng chỉ nhìn vào bề mặt của sự việc, hãy nhìn sâu vào bản chất. Đây là lúc học hỏi, nghiên cứu hoặc thiền định để nâng cao tần số rung động.", "mystic");
+            if ((counts[3]||0) > 0 && (counts[8]||0) > 0) {
+                addCard("Cân Bằng Tuyệt Đối", "Nghệ Thuật Sống (Có Cả 3 & 8)", 
+                "Hãy chia đôi thời gian: 50% để kết nối tạo ra giá trị, 50% để tận hưởng cuộc sống. Vũ trụ sẽ chiều theo mọi ý muốn của bạn trong giai đoạn này.", "wood");
+            } else if (!(counts[3]||0) && !(counts[8]||0)) {
+                addCard("Kỷ Luật Sắt", "Sự Tôi Luyện Của Người Tu Tập (Thiếu 3 & 8)", 
+                "Giai đoạn này đòi hỏi sự nghiêm khắc và tự lập cao độ. Không có sự chiều chuộng, không có quý nhân nâng đỡ. Bạn phải tự đứng trên đôi chân của mình, siêng năng lao động để tạo ra quả ngọt.", "metal");
             }
 
-            // 6. GIAO TIẾP (Số 5)
-            if(counts[5]>0) {
-                addCard("Ứng Xử", "Sức Mạnh Của Ái Ngữ", 
-                "Năng lượng thay đổi nhanh chóng có thể gây ra xung đột. Hãy biến tranh luận thành đối thoại, biến mâu thuẫn thành sự thấu hiểu. Lời nói của bạn có sức mạnh chữa lành hoặc gây thương nhớ - hãy lựa chọn khôn ngoan.", "balance");
+            if ((counts[7]||0) > 0) {
+                addCard("Tâm Linh", "Ngọn Đèn Soi Sáng Mục Tiêu (Số 7)", 
+                `<p>Những câu hỏi lớn đang thôi thúc bạn: 'Ta là ai?', 'Sứ mệnh của ta là gì?'. Nếu cuộc sống đang nhàm chán lặp lại, đó là dấu hiệu tâm hồn đang cằn cỗi.</p>
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-eye mr-2"></i>HÀNH ĐỘNG:</p>
+                    <p class="text-sm">Tìm kiếm trải nghiệm mới, kiến thức mới. Đừng để tuổi già ập đến trong sự nuối tiếc vì một cuộc đời vô vị. Hãy xác định rõ lý tưởng sống.</p>
+                 </div>`, "fire");
+            } else {
+                addCard("Thực Tế", "Bám Sát Hiện Tại (Không Số 7)", 
+                "Đừng quá trăn trở về những câu hỏi triết học xa vời. Hãy tập trung xử lý tốt những công việc thực tế ngay trước mắt.", "earth");
+            }
+
+            if ((counts[2]||0) > 0) {
+                addCard("Trách Nhiệm", "Hạnh Phụng Sự Là Hạnh Phúc (Số 2)", 
+                `<p>Bạn được kêu gọi thực hiện nghĩa vụ với cộng đồng/gia đình. Sự thăng tiến bền vững đến từ việc bạn mang lại giá trị cho người khác bao nhiêu. Nếu trốn tránh trách nhiệm, bạn dễ bị đào thải.</p>
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-hands-helping mr-2"></i>HÀNH ĐỘNG:</p>
+                    <p class="text-sm">Hãy làm tròn vai của mình (người mẹ, nhân viên, lãnh đạo) với sự tận tâm cao nhất. Chia sẻ kiến thức và giúp đỡ người khác là con đường nhanh nhất để tỏa sáng.</p>
+                 </div>`, "fire");
+            }
+
+            if ((counts[9]||0) > 0) {
+                let subTitle = (counts[9]||0) >= 2 ? "Yêu Cầu Về Giá Trị Cốt Lõi (2 Số 9)" : "Sự Linh Hoạt Trong Thu Hoạch (1 Số 9)";
+                let subContent = (counts[9]||0) >= 2 
+                    ? "Sản phẩm/dịch vụ bạn cung cấp phải thực sự chất lượng và có tính ứng dụng cao. Khách hàng đòi hỏi sự tinh tế và giá trị thực." 
+                    : "Bạn có thể kinh doanh đa dạng, 'bán gì cũng được'. Hãy mạnh dạn tung sản phẩm ra thị trường, dù bạn còn non trẻ.";
+
+                addCard("Tài Lộc", `Mùa Gặt Của Nhân Quả - ${subTitle}`, 
+                `<p>${subContent} Đây là lúc chuyển hóa nỗ lực rèn luyện thành tài chính.</p>
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-coins mr-2"></i>HÀNH ĐỘNG:</p>
+                    <p class="text-sm">Đừng giấu giếm tài năng. Hãy đưa giá trị của bạn ra thị trường. Nếu không gặt hái được gì lúc này, cần xem lại quá trình gieo hạt trước đó.</p>
+                 </div>`, "metal");
+            } else if (!(counts[3]||0) && !(counts[8]||0)) {
+                addCard("Tĩnh Lặng", "Chờ Đợi Thời Cơ (Không Số 9, 3, 8)", 
+                "Không nên lao đi kiếm tiền trong vô vọng. Đất cần nghỉ ngơi. Hãy tập trung hoàn thành trách nhiệm hiện tại và tu dưỡng bản thân.", "earth");
+            }
+
+            if ((counts[4]||0) > 0) {
+                addCard("Chữa Lành", "Quay Về Nương Tựa Thân Tâm (Số 4)", 
+                `<p>Cơ thể đang lên tiếng cần bảo trì. Một ngôi nhà muốn cao phải có nền móng chắc. Đừng phớt lờ những cơn đau nhỏ.</p>
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-heartbeat mr-2"></i>HÀNH ĐỘNG:</p>
+                    <p class="text-sm">Tạm gác tham vọng, ưu tiên số 1 cho sức khỏe. Chữa trị dứt điểm các vấn đề thân thể, thanh lọc thói quen xấu và sắp xếp lại cuộc sống.</p>
+                 </div>`, "metal");
+            }
+
+            if ((counts[5]||0) > 0) {
+                addCard("Giao Tiếp", "Nghệ Thuật Của Ái Ngữ (Số 5)", 
+                `<p>Năng lượng xung đột có thể gia tăng. Đây là cơ hội để rèn luyện nhẫn nhục và khả năng thuyết phục.</p>
+                 <div class="mt-3 p-3 bg-white/5 rounded border border-white/10">
+                    <p class="highlight text-sm mb-1"><i class="fas fa-comments mr-2"></i>HÀNH ĐỘNG:</p>
+                    <p class="text-sm">Bước ra ngoài luyện nói, tranh luận để tìm chân lý (không phải thắng thua). Học cách diễn đạt rõ ràng để tránh hiểu lầm gây thù chuốc oán.</p>
+                 </div>`, "earth");
+            } else {
+                addCard("Ứng Xử", "Sự Im Lặng Hùng Tráng (Không Số 5)", 
+                "Đừng can thiệp vào chuyện người khác. Giữ tâm tĩnh lặng và tránh xa những thị phi không cần thiết.", "earth");
             }
         }
-
-        // --- PDF EXPORT (PRO QUALITY) ---
         function downloadPDF() {
             const element = document.getElementById('printArea');
             const btn = document.querySelector('button[onclick="downloadPDF()"]');
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Đang xử lý...';
+            const originalText = btn.innerHTML;
+            
+            // Báo hiệu đang xử lý
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+            btn.disabled = true;
 
+            // --- BƯỚC 1: CHUẨN BỊ GIAO DIỆN ĐỂ IN (FIX TRẮNG VIỀN) ---
+            // Lưu lại các class cũ để restore sau
+            const originalClasses = element.className;
+            
+            // 1. Xóa hiệu ứng kính (glass) và bo góc (rounded) để tránh viền trắng ở 4 góc
+            element.classList.remove('glass', 'rounded-2xl');
+            
+            // 2. Thêm class background đặc để lấp đầy PDF
+            element.style.backgroundColor = '#121212'; 
+            element.style.backgroundImage = 'none'; // Xóa vân tay mờ nếu cần, hoặc giữ lại tùy ý
+            element.style.color = '#ffffff';
+            element.style.borderRadius = '0px'; // Vuông góc tuyệt đối
+            
+            // 3. Cấu hình PDF
             const opt = {
-                margin: 0,
-                filename: `Matrix_Wisdom_${new Date().getTime()}.pdf`,
-                image: { type: 'jpeg', quality: 1 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#121212' },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                margin:       0, // Không chừa lề trắng
+                filename:     `Matrix_Wisdom_Report_${new Date().getTime()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    backgroundColor: '#121212', // Quan trọng: Nền canvas màu đen
+                    scrollY: 0,
+                    windowWidth: 1000 // Giả lập chiều rộng cố định để layout không bị vỡ
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save().then(() => {
-                btn.innerHTML = '<i class="fas fa-file-export"></i> Xuất Bản (PDF)';
+            // --- BƯỚC 2: XUẤT PDF & KHÔI PHỤC GIAO DIỆN ---
+            html2pdf().set(opt).from(element).save()
+            .then(() => {
+                // Khôi phục lại giao diện đẹp như cũ trên màn hình web
+                element.className = originalClasses;
+                element.style.backgroundColor = '';
+                element.style.backgroundImage = '';
+                element.style.color = '';
+                element.style.borderRadius = '';
+                
+                // Trả lại nút bấm
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            })
+            .catch(err => {
+                console.error(err);
+                // Vẫn khôi phục nếu lỗi
+                element.className = originalClasses;
+                element.style.backgroundColor = '';
+                element.style.borderRadius = '';
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                alert("Có lỗi khi xuất PDF. Vui lòng thử lại.");
             });
         }
-        
+   
         window.onload = init;
     </script>
 </body>
