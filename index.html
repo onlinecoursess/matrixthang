@@ -187,11 +187,33 @@
                 </div>
 
                 <!-- Nhập Ngày Sinh -->
-                <div class="text-left">
-                    <label class="text-gray-400 text-xs uppercase ml-1 mb-1 block">Ngày tháng năm sinh</label>
-                    <input type="date" id="birthDate" 
-                        class="input-custom w-full rounded-lg py-3 px-4 text-white focus:border-[#d4af37] transition appearance-none">
-                </div>
+              <div class="text-left">
+    <label class="text-gray-400 text-xs uppercase ml-1 mb-1 block">Ngày tháng năm sinh</label>
+    <div class="grid grid-cols-3 gap-3">
+        <!-- Chọn Ngày -->
+        <div class="relative">
+            <select id="dobDay" class="input-custom w-full rounded-lg py-3 px-2 text-white focus:border-[#d4af37] transition appearance-none cursor-pointer text-center bg-[#121212]">
+                <option value="" disabled selected>Ngày</option>
+                <!-- Javascript sẽ tự điền số 1-31 vào đây -->
+            </select>
+            <i class="fas fa-chevron-down absolute right-2 top-4 text-xs text-gray-500 pointer-events-none"></i>
+        </div>
+
+        <!-- Chọn Tháng -->
+        <div class="relative">
+            <select id="dobMonth" class="input-custom w-full rounded-lg py-3 px-2 text-white focus:border-[#d4af37] transition appearance-none cursor-pointer text-center bg-[#121212]">
+                <option value="" disabled selected>Tháng</option>
+                <!-- Javascript sẽ tự điền số 1-12 vào đây -->
+            </select>
+            <i class="fas fa-chevron-down absolute right-2 top-4 text-xs text-gray-500 pointer-events-none"></i>
+        </div>
+
+        <!-- Nhập Năm -->
+        <input type="number" id="dobYear" placeholder="Năm (VD: 1990)" 
+            class="input-custom w-full rounded-lg py-3 px-2 text-white focus:border-[#d4af37] transition text-center placeholder-gray-600">
+    </div>
+</div>
+
 
                 <!-- Nút Tra Cứu -->
                 <button onclick="calculateMatrix()" 
@@ -261,9 +283,31 @@
         const STORAGE_KEY = 'matrix_wisdom_session_v5';
         const currentDate = new Date();
         let currentUserRole = null;
+function populateDateDropdowns() {
+    const daySelect = document.getElementById('dobDay');
+    const monthSelect = document.getElementById('dobMonth');
+
+    // Tạo ngày 1 -> 31
+    for (let i = 1; i <= 31; i++) {
+        let option = document.createElement('option');
+        option.value = i < 10 ? '0' + i : i; // Thêm số 0 đằng trước nếu nhỏ hơn 10
+        option.text = i;
+        daySelect.appendChild(option);
+    }
+
+    // Tạo tháng 1 -> 12
+    for (let i = 1; i <= 12; i++) {
+        let option = document.createElement('option');
+        option.value = i < 10 ? '0' + i : i;
+        option.text = "Tháng " + i;
+        monthSelect.appendChild(option);
+    }
+}
 
         // --- AUTH & INIT ---
         async function init() {
+                populateDateDropdowns(); // <--- THÊM DÒNG NÀY VÀO ĐẦU HÀM INIT
+
             try {
                 const sessionStr = localStorage.getItem(STORAGE_KEY);
                 const session = sessionStr ? JSON.parse(sessionStr) : null;
@@ -431,33 +475,50 @@
         }
 
         // --- CORE CALCULATION & RENDERING (Giữ nguyên logic gốc) ---
-        function calculateMatrix() {
-            // 1. Lấy dữ liệu
-            const nameInput = document.getElementById('fullName').value.trim();
-            const dateInput = document.getElementById('birthDate').value;
+      function calculateMatrix() {
+    // 1. Lấy dữ liệu từ 3 ô riêng biệt
+    const nameInput = document.getElementById('fullName').value.trim();
+    
+    const d = document.getElementById('dobDay').value;
+    const mInput = document.getElementById('dobMonth').value;
+    const yInput = document.getElementById('dobYear').value;
 
-            // 2. Kiểm tra
-            if (!nameInput || !dateInput) {
-                alert("Vui lòng nhập đầy đủ Họ tên và Ngày sinh!");
-                return;
-            }
+    // 2. Kiểm tra dữ liệu
+    if (!nameInput || !d || !mInput || !yInput) {
+        alert("Vui lòng nhập đầy đủ: Họ tên, Ngày, Tháng và Năm sinh!");
+        return;
+    }
 
-            // 3. Xử lý dữ liệu hiển thị (Chuyển yyyy-mm-dd thành dd/mm/yyyy)
-            const [yearIn, monthIn, dayIn] = dateInput.split('-'); // Tách chuỗi từ input
-            const fullBirthDate = `${dayIn}/${monthIn}/${yearIn}`; // Ghép lại thành định dạng VN
+    // Kiểm tra năm hợp lệ (ví dụ: phải có 4 chữ số)
+    if (yInput.length !== 4 || isNaN(yInput)) {
+        alert("Vui lòng nhập Năm sinh gồm 4 chữ số (Ví dụ: 1990)");
+        return;
+    }
 
-            // 4. Lấy số 'Ngày' để tính toán (Giữ nguyên logic cũ)
-            const day = parseInt(dayIn); 
+    // Ghép lại thành biến để logic cũ vẫn chạy đúng
+    // Logic cũ dùng biến: dayIn, monthIn, yearIn
+    const dayIn = d;
+    const monthIn = mInput;
+    const yearIn = yInput;
+    
+    // Tạo chuỗi hiển thị
+    const fullBirthDate = `${dayIn}/${monthIn}/${yearIn}`; 
 
-            // Lấy thời gian thực (Tháng/Năm hiện tại) cho chu kỳ năng lượng
-            const m = currentDate.getMonth() + 1;
-            const y = currentDate.getFullYear();
-            
-            // 5. Cập nhật giao diện (Đã sửa dòng hiển thị Ngày sinh full)
-            document.getElementById('reportDate').innerHTML = `
-                <span class="block text-2xl text-white font-bold mb-2 uppercase tracking-wide">${nameInput}</span>
-                <span class="text-sm">Ngày sinh: <b class="text-[#d4af37]">${fullBirthDate}</b> • Chu kỳ năng lượng: Tháng ${m}/${y}</span>
-            `;
+    // 4. Lấy số 'Ngày' để tính toán (Giữ nguyên logic cũ)
+    const day = parseInt(dayIn); 
+
+    // ... (Phần còn lại của hàm calculateMatrix giữ nguyên không đổi) ...
+    // Bắt đầu từ đoạn: const m = currentDate.getMonth() + 1;
+    
+    // ... Copy tiếp phần code cũ từ dòng này trở xuống ...
+    const m = currentDate.getMonth() + 1;
+    const y = currentDate.getFullYear();
+    
+    document.getElementById('reportDate').innerHTML = `
+        <span class="block text-2xl text-white font-bold mb-2 uppercase tracking-wide">${nameInput}</span>
+        <span class="text-sm">Ngày sinh: <b class="text-[#d4af37]">${fullBirthDate}</b> • Chu kỳ năng lượng: Tháng ${m}/${y}</span>
+    `;
+
 
             document.getElementById('welcomeMessage').classList.add('hidden');
             document.getElementById('resultContainer').classList.remove('hidden');
